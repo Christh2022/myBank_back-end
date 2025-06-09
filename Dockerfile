@@ -27,9 +27,13 @@ RUN curl -sS https://get.symfony.com/cli/installer | bash \
 WORKDIR /var/www
 COPY . .
 
+# Installation des dépendances PHP
 RUN composer install --no-interaction --optimize-autoloader
 
+# Permissions
 RUN chown -R www-data:www-data /var/www/var /var/www/vendor
 
+# Exposition du port PHP-FPM
 EXPOSE 9000
+# Commande par défaut pour démarrer PHP-FPM
 CMD ["php-fpm"]
