@@ -30,6 +30,9 @@ class Category
     #[ORM\OneToMany(targetEntity: Expense::class, mappedBy: 'category', orphanRemoval: true)]
     private Collection $Expense;
 
+    #[ORM\Column]
+    private ?\DateTime $date = null;
+
     public function __construct()
     {
         $this->Expense = new ArrayCollection();
@@ -102,6 +105,18 @@ class Category
                 $expense->setCategory(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getDate(): ?\DateTime
+    {
+        return $this->date;
+    }
+
+    public function setDate(\DateTime $date): static
+    {
+        $this->date = $date;
 
         return $this;
     }
