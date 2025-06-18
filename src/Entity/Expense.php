@@ -34,6 +34,7 @@ class Expense
 
     #[ORM\ManyToOne(inversedBy: 'Expense')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['expense:detail', 'category:read'])]
     private ?Category $category = null;
 
     #[ORM\ManyToOne(inversedBy: 'expenses')]

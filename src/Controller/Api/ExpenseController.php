@@ -3,7 +3,9 @@
 namespace App\Controller\Api;
 
 use App\Entity\Expense;
+use App\Repository\CategoryRepository;
 use App\Repository\ExpenseRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,21 +15,21 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/expense')]
 class ExpenseController extends AbstractController
 {
-    #[Route('', name: 'app_api_expense')]
+    #[Route('',methods:['GET'], name: 'app_api_expense')]
     public function index(ExpenseRepository $expenseRepository): JsonResponse
     {
         $expenses = $expenseRepository->findAll();
-        return $this->json($expenses, 200, [], ['groups' => 'expense:read']);
+        return $this->json($expenses, 200, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
     }
 
-    #[Route('/{id}', name: 'get_expense_by_id')]
+    #[Route('/{id}',methods:['GET'], name: 'get_expense_by_id')]
     public function show(int $id, ExpenseRepository $expenseRepository): JsonResponse
     {
         $expense = $expenseRepository->find($id);
         if (!$expense) {
             return $this->json(['error' => 'Expense not found'], 404);
         }
-        return $this->json($expense, 200, [], ['groups' => 'expense:read']);
+        return $this->json($expense, 200, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
     }
 
     #[Route('/{id}', methods: ['DELETE'], name: 'delete_expense_by_id')]
@@ -45,17 +47,11 @@ class ExpenseController extends AbstractController
     }
 
     #[Route('', methods: ['POST'], name: 'create_expense')]
-    public function create(Request $request, EntityManagerInterface $em): JsonResponse
+    public function create(Request $request, EntityManagerInterface $em, CategoryRepository $categoryRepository, UserRepository $userRepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (empty($data['amount']) || empty($data['status']) || empty($data['label'])) {
-            return $this->json(['error' => 'Amount, status, and label are required'], 400);
-        }
-
-
-        // Validate category and user if they are provided
-        if (isset($data['category']) && !is_numeric($data['category'])) {
-            return $this->json(['error' => 'Invalid category ID'], 400);
+            return $this->json(['error' => 'amount, status, and label are required'], 400);
         }
 
         $expense = new Expense();
@@ -63,13 +59,23 @@ class ExpenseController extends AbstractController
         $expense->setAmount($data['amount']);
         $expense->setStatus($data['status']);
         $expense->setLabel($data['label']);
-        $expense->setCategory($data['category'] ?? null); // Assuming category is passed as an ID or object
-        $expense->setUser($data['user'] ?? null); // Assuming the user is authenticated
+
+        // Récupérer les entités à partir des ID
+        $category = $categoryRepository->find($data['category'] ?? null);
+        $user = $userRepository->find($data['user'] ?? null);
+
+        if (!$category || !$user) {
+            return $this->json(['error' => 'Category or User not found'], 400);
+        }
+
+        $expense->setCategory($category);
+        $expense->setUser($user);
+
 
         $em->persist($expense);
         $em->flush();
 
-        return $this->json($expense, 201, [], ['groups' => 'expense:read']);
+        return $this->json($expense, 201, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
     }
 
     #[Route('/{id}', methods: ['PUT'], name: 'update_expense_by_id')]
@@ -90,6 +96,6 @@ class ExpenseController extends AbstractController
 
         $em->flush();
 
-        return $this->json($expense);
+        return $this->json($expense, 201, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
     }
 }

@@ -8,7 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/api/category')]
 class CategoryController extends AbstractController
@@ -17,7 +17,7 @@ class CategoryController extends AbstractController
     public function index(CategoryRepository $categoryRepository): JsonResponse
     {
         $categories = $categoryRepository->findAll();
-        return $this->json($categories, 200, [], ['groups' => 'category:read']);
+        return $this->json($categories, 200, [], ['groups' => ['category:read', 'expense:read']]);
     }
 
     #[Route('/{id}', methods: ['GET'], name: 'get_category_by_id')]
@@ -27,49 +27,53 @@ class CategoryController extends AbstractController
         if (!$category) {
             return $this->json(['error' => 'Category not found'], 404);
         }
-        return $this->json($category, 200, [], ['groups' => 'category:read']);
+        return $this->json($category, 200, [], ['groups' => ['category:read', 'expense:read']]);
     }
 
     #[Route('/{id}', methods: ['DELETE'], name: 'delete_category_by_id')]
-    public function delete(int $id, CategoryRepository $categoryRepository, EntityManagerInterface $em): JsonResponse
+    public function delete(int $id, CategoryRepository $categoryRepository): JsonResponse
     {
         $category = $categoryRepository->find($id);
         if (!$category) {
             return $this->json(['error' => 'Category not found'], 404);
         }
 
-        $em->remove($category);
-        $em->flush();
-
+        $categoryRepository->deleteCategory($category);
         return $this->json(['message' => 'Category deleted successfully']);
     }
 
     #[Route('', methods: ['POST'], name: 'create_category')]
-    public function create(Request $request, EntityManagerInterface $em): JsonResponse
+    public function create(CategoryRepository $categoryRepository, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        if (empty($data['title']) || empty($data['icon_name'])) {
-            return $this->json(['error' => 'Title and icon_name are required'], 400);
+        if (empty($data['title']) && empty($data['icon_name'])) {
+            return $this->json(['error' => 'Category title and icon name are required'], 400);
         }
 
         $category = new Category();
         $category->setTitle($data['title']);
         $category->setIconName($data['icon_name']);
-        $category->setDescription($data['description'] ?? null);
+        if (isset($data['description'])) {
+            $category->setDescription($data['description']);
+        }
         $category->setDate(new \DateTime($data['date'] ?? 'now'));
-
-        $em->persist($category);
-        $em->flush();
+        $entityManager->persist($category);
+        $entityManager->flush();
 
         return $this->json($category, 201);
     }
 
     #[Route('/{id}', methods: ['PUT'], name: 'update_category_by_id')]
-    public function update(int $id, Request $request, CategoryRepository $categoryRepository, EntityManagerInterface $em): JsonResponse
+    public function update(int $id, CategoryRepository $categoryRepository, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        // Assuming the request body contains the updated category data
         $data = json_decode($request->getContent(), true);
-        $category = $categoryRepository->find($id);
 
+        if (empty($data['title'])) {
+            return $this->json(['error' => 'Category title is required'], 400);
+        }
+
+        $category = $categoryRepository->find($id);
         if (!$category) {
             return $this->json(['error' => 'Category not found'], 404);
         }
@@ -78,9 +82,8 @@ class CategoryController extends AbstractController
         $category->setIconName($data['icon_name'] ?? $category->getIconName());
         $category->setDescription($data['description'] ?? $category->getDescription());
         $category->setDate(new \DateTime($data['date'] ?? 'now'));
-
         $em->flush();
 
-        return $this->json($category, 200, [], ['groups' => 'category:read']);
+        return $this->json($category, 200, [], ['groups' => ['category:read', 'expense:read']]);
     }
 }
