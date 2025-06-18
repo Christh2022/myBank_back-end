@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ExpenseRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ExpenseRepository::class)]
 class Expense
@@ -12,22 +13,28 @@ class Expense
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['expense:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['expense:read'])]
     private ?\DateTime $date = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 0)]
+    #[Groups(['expense:read'])]
     private ?string $amount = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['expense:read'])]
     private ?string $status = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['expense:read'])]
     private ?string $label = null;
 
     #[ORM\ManyToOne(inversedBy: 'Expense')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['expense:detail', 'category:read'])]
     private ?Category $category = null;
 
     #[ORM\ManyToOne(inversedBy: 'expenses')]

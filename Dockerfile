@@ -1,4 +1,4 @@
-FROM php:8.4.8-fpm-alpine
+FROM php:8.3-fpm-alpine
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -8,11 +8,9 @@ RUN apk add --no-cache \
     curl \
     zip \
     unzip \
-    libpq-dev \
     libzip-dev \
     oniguruma-dev \
     libxml2-dev \
-    libcurl \
     bash \
     && docker-php-ext-install pdo pdo_mysql zip
 
@@ -23,18 +21,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN curl -sS https://get.symfony.com/cli/installer | bash \
     && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
 
-# Configuration de l'application
 WORKDIR /var/www
+
 COPY . .
 
-# Installation des dépendances PHP
 RUN composer install --no-interaction --optimize-autoloader
 
-# Permissions
 RUN chown -R www-data:www-data /var/www/var /var/www/vendor
 
-# Exposition du port PHP-FPM
 EXPOSE 9000
 
-# Commande par défaut pour démarrer PHP-FPM
 CMD ["php-fpm"]
