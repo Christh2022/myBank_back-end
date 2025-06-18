@@ -48,6 +48,7 @@ class User
      * @var Collection<int, Expense>
      */
     #[ORM\OneToMany(targetEntity: Expense::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Groups(['user:read'])]
     private Collection $expenses;
 
     public function __construct()

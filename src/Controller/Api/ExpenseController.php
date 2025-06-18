@@ -98,4 +98,17 @@ class ExpenseController extends AbstractController
 
         return $this->json($expense, 201, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
     }
+
+    #[Route('/user/expense/{id}', methods: ['GET'], name: 'get_expenses_by_user_id')]
+    public function getExpensesByUserId(int $id, ExpenseRepository $expenseRepository): JsonResponse
+    {
+        $expenses = $expenseRepository->findBy(['user' => $id]);
+        if (!$expenses) {
+            return $this->json(['error' => 'No expenses found for this user'], 404);
+        }
+        return $this->json($expenses, 200, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
+    }
+
+
+    
 }

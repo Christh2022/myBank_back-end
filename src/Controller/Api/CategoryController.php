@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api;
 
+use App\Repository\CategoryRepository;
 use App\Repository\ExpenseRepository;
 use Doctrine\ORM\EntityManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,7 +16,7 @@ class CategoryController extends AbstractController
     #[Route('', methods: ['GET'], name: 'get_all_category')]
     public function index(CategoryRepository $categoryRepository): JsonResponse
     {
-        $categories = $expenseRepository->findAllCategories();
+        $categories = $categoryRepository->findAllCategories();
         return $this->json($categories);
     }
 
@@ -26,7 +27,7 @@ class CategoryController extends AbstractController
         if (!$category) {
             return $this->json(['error' => 'Category not found'], 404);
         }
-        return $this->json($category, 200, [], ['groups' => ['category:read', 'expense:read']]);
+        return $this->json($category, 200, [], ['groups' => ['category:read', 'expense:read', 'user:read']]);
     }
 
     #[Route('/{id}', methods: ['DELETE'], name: 'delete_category_by_id')]
@@ -37,27 +38,27 @@ class CategoryController extends AbstractController
             return $this->json(['error' => 'Category not found'], 404);
         }
 
-        $expenseRepository->deleteCategory($category);
+        $categoryRepository->delete($category);
         return $this->json(['message' => 'Category deleted successfully']);
     }
 
     #[Route('', methods: ['POST'], name: 'create_category')]
-    public function create(ExpenseRepository $expenseRepository, Request $request, EntityManager $entityManager): JsonResponse
+    public function create(CategoryRepository $categoryRepository, Request $request, EntityManager $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (empty($data['title']) && empty($data['icon_name'])) {
             return $this->json(['error' => 'Category title and icon name are required'], 400);
         }
 
-        $category = $expenseRepository->createCategory($data['title'], $data['icon_name']);
+        $category = $categoryRepository->createCategory($data['title'], $data['icon_name']);
         $entityManager->persist($category);
         $entityManager->flush();
 
-        return $this->json($category, 201, [], ['groups' => ['category:read', 'user:read']]);
+        return $this->json($category, 201, [], ['groups' => ['category:read', 'user:read', 'expense:read']]);
     }
 
     #[Route('/{id}', methods: ['PUT'], name: 'update_category_by_id')]
-    public function update(int $id, ExpenseRepository $expenseRepository, Request $request, EntityManager $entityManager): JsonResponse
+    public function update(int $id, CategoryRepository $categoryRepository, Request $request, EntityManager $entityManager): JsonResponse
     {
         // Assuming the request body contains the updated category data
         $data = json_decode($request->getContent(), true);
@@ -71,7 +72,35 @@ class CategoryController extends AbstractController
             return $this->json(['error' => 'Category not found'], 404);
         }
 
-        $updatedCategory = $expenseRepository->updateCategory($category, $data['name']);
-        return $this->json($updatedCategory);
+        // Update the category properties
+        $category->setTitle($data['title']);
+        if (isset($data['icon_name'])) {
+            $category->setIconName($data['icon_name']);
+        }
+        if (isset($data['description'])) {
+            $category->setDescription($data['description']);
+        }
+        $entityManager->flush();
+        return $this->json($category, 200, [], ['groups' => ['category:read', 'expense:read', 'user:read']]);
+    }
+
+    #[Route('/category/expense/{id}', methods: ['GET'], name: 'get_expenses_by_category_id')]
+    public function getExpensesByCategoryId(int $id, ExpenseRepository $expenseRepository): JsonResponse
+    {
+        $expenses = $expenseRepository->findBy(['category' => $id]);
+        if (!$expenses) {
+            return $this->json(['error' => 'No expenses found for this category'], 404);
+        }
+        return $this->json($expenses, 200, [], ['groups' => ['expense:read', 'category:read', 'user:read']]);
+    }
+
+    #[Route('/category/user/{id}', methods: ['GET'], name: 'get_categories_by_user_id')]
+    public function getCategoriesByUserId(int $id, CategoryRepository $categoryRepository): JsonResponse
+    {
+        $categories = $categoryRepository->findBy(['user' => $id]);
+        if (!$categories) {
+            return $this->json(['error' => 'No categories found for this user'], 404);
+        }
+        return $this->json($categories, 200, [], ['groups' => ['category:read', 'expense:read', 'user:read']]);
     }
 }
