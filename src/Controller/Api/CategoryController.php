@@ -16,8 +16,8 @@ class CategoryController extends AbstractController
     #[Route('', methods: ['GET'], name: 'get_all_category')]
     public function index(CategoryRepository $categoryRepository): JsonResponse
     {
-        $categories = $categoryRepository->findAllCategories();
-        return $this->json($categories);
+        $categories = $categoryRepository->findAll();
+        return $this->json($categories, 200, [], ['groups' => ['category:read', 'expense:read', 'user:read']]);
     }
 
     #[Route('/{id}', methods: ['GET'], name: 'get_category_by_id')]
