@@ -12,6 +12,7 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
         login:
             pattern: ^/login
             stateless: true
@@ -22,11 +23,25 @@ security:
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
         
+        register:
+            pattern: ^/register
+            stateless: true
+            security: false
+
+        check:
+            pattern: ^/check
+            stateless: true
+            jwt: ~
+
+        refresh:
+            pattern: ^/refresh
+            stateless: true
+            jwt: ~
+
         api:
             pattern: ^/api
             stateless: true
             jwt: ~
-
 
         main:
             lazy: true
@@ -44,6 +59,8 @@ security:
     access_control:
         - { path: ^/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/check, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/refresh, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/api/, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:

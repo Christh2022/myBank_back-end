@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Api;
+namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
@@ -26,14 +26,14 @@ class AuthenticationController extends AbstractController
 
     }
 
-    #[Route('/api/logout', name: 'api_logout', methods: ['POST'])]
+    #[Route('/logout', name: 'api_logout', methods: ['POST'])]
     public function logout(): JsonResponse
     {
         // The logout route is handled by the security system, so we can just return a success message.
         return $this->json(['message' => 'Logged out successfully'], 200);
     }
 
-    #[Route('/api/refresh', name: 'api_refresh', methods: ['POST'])]
+    #[Route('/refresh', name: 'api_refresh', methods: ['POST'])]
     public function refresh(#[CurrentUser] ?User $user, JWTTokenManagerInterface $jwtManager): JsonResponse
     {
         if (!$user) {
@@ -43,7 +43,7 @@ class AuthenticationController extends AbstractController
         return $this->json(['token' => $jwtManager->create($user)], 200, [], ['groups' => ['user:read']]);
     }
 
-    #[Route('/api/check', name: 'api_check', methods: ['GET'])]
+    #[Route('/check', name: 'api_check', methods: ['GET'])]
     public function check(#[CurrentUser] ?User $user): JsonResponse
     {
         if (!$user) {
