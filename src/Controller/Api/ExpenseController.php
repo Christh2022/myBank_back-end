@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entity\Expense;
+use App\Repository\BankCardsRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\ExpenseRepository;
 use App\Repository\UserRepository;
@@ -47,7 +48,7 @@ class ExpenseController extends AbstractController
     }
 
     #[Route('', methods: ['POST'], name: 'create_expense')]
-    public function create(Request $request, EntityManagerInterface $em, CategoryRepository $categoryRepository, UserRepository $userRepository): JsonResponse
+    public function create(BankCardsRepository $bankCardsRepository, Request $request, EntityManagerInterface $em, CategoryRepository $categoryRepository, UserRepository $userRepository): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (empty($data['amount']) || empty($data['status']) || empty($data['label'])) {
@@ -59,6 +60,16 @@ class ExpenseController extends AbstractController
         $expense->setAmount($data['amount']);
         $expense->setStatus($data['status']);
         $expense->setLabel($data['label']);
+
+        // Récupérer l'entité BankCards à partir de l'id
+        $bankCard = null;
+        if (!empty($data['bankCards'])) {
+            $bankCard = $bankCardsRepository->find($data['bankCards']);
+            if (!$bankCard) {
+                return $this->json(['error' => 'BankCard not found'], 400);
+            }
+        }
+        $expense->setBankCards($bankCard);
 
         // Récupérer les entités à partir des ID
         $category = $categoryRepository->find($data['category'] ?? null);

@@ -1,11 +1,8 @@
 
 ###> symfony/framework-bundle ###
 /.env
-<<<<<<< HEAD
 /.env.dev
-=======
 .env.dev
->>>>>>> fa0aac6bcbf7f53f8a20cf216dedc0c8b61a5d88
 /.env.local
 /.env.local.php
 /.env.*

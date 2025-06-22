@@ -2,9 +2,10 @@
 
 namespace App\Controller\Api;
 
+use App\Entity\Category;
 use App\Repository\CategoryRepository;
 use App\Repository\ExpenseRepository;
-use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,14 +44,22 @@ class CategoryController extends AbstractController
     }
 
     #[Route('', methods: ['POST'], name: 'create_category')]
-    public function create(CategoryRepository $categoryRepository, Request $request, EntityManager $entityManager): JsonResponse
+    public function create(CategoryRepository $categoryRepository, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
         if (empty($data['title']) && empty($data['icon_name'])) {
             return $this->json(['error' => 'Category title and icon name are required'], 400);
         }
 
-        $category = $categoryRepository->createCategory($data['title'], $data['icon_name']);
+        $category = new Category();
+        $category->setTitle($data['title']);
+        $category->setIconName($data['icon_name']);
+        if (isset($data['description'])) {
+            $category->setDescription($data['description']);
+        }
+        $category->setDate(new \DateTime());
+        $category->setUser($this->getUser()); // Assuming the user is set from the authenticated session
+        
         $entityManager->persist($category);
         $entityManager->flush();
 
@@ -58,7 +67,7 @@ class CategoryController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['PUT'], name: 'update_category_by_id')]
-    public function update(int $id, CategoryRepository $categoryRepository, Request $request, EntityManager $entityManager): JsonResponse
+    public function update(int $id, CategoryRepository $categoryRepository, Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         // Assuming the request body contains the updated category data
         $data = json_decode($request->getContent(), true);

@@ -39,6 +39,10 @@ class Category
     #[ORM\Column]
     private ?\DateTime $date = null;
 
+    #[ORM\ManyToOne(inversedBy: 'categories')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
+
     public function __construct()
     {
         $this->Expense = new ArrayCollection();
@@ -123,6 +127,18 @@ class Category
     public function setDate(\DateTime $date): static
     {
         $this->date = $date;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
 
         return $this;
     }
