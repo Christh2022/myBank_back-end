@@ -56,9 +56,16 @@ class User implements UserInterface,  PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    /**
+     * @var Collection<int, BankCards>
+     */
+    #[ORM\OneToMany(targetEntity: BankCards::class, mappedBy: 'user')]
+    private Collection $bankCards;
+
     public function __construct()
     {
         $this->expenses = new ArrayCollection();
+        $this->bankCards = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -204,6 +211,36 @@ class User implements UserInterface,  PasswordAuthenticatedUserInterface
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BankCards>
+     */
+    public function getBankCards(): Collection
+    {
+        return $this->bankCards;
+    }
+
+    public function addBankCard(BankCards $bankCard): static
+    {
+        if (!$this->bankCards->contains($bankCard)) {
+            $this->bankCards->add($bankCard);
+            $bankCard->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBankCard(BankCards $bankCard): static
+    {
+        if ($this->bankCards->removeElement($bankCard)) {
+            // set the owning side to null (unless already changed)
+            if ($bankCard->getUser() === $this) {
+                $bankCard->setUser(null);
+            }
+        }
 
         return $this;
     }
