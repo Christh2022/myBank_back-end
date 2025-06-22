@@ -34,6 +34,10 @@ class Expense
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    #[ORM\ManyToOne(inversedBy: 'expenses')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?BankCard $bankCard = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -107,6 +111,18 @@ class Expense
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getBankCard(): ?BankCard
+    {
+        return $this->bankCard;
+    }
+
+    public function setBankCard(?BankCard $bankCard): static
+    {
+        $this->bankCard = $bankCard;
 
         return $this;
     }

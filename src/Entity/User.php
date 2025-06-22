@@ -42,9 +42,16 @@ class User
     #[ORM\OneToMany(targetEntity: Expense::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $expenses;
 
+    /**
+     * @var Collection<int, BankCard>
+     */
+    #[ORM\OneToMany(targetEntity: BankCard::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $bankCards;
+
     public function __construct()
     {
         $this->expenses = new ArrayCollection();
+        $this->bankCards = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -160,6 +167,36 @@ class User
             // set the owning side to null (unless already changed)
             if ($expense->getUser() === $this) {
                 $expense->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BankCard>
+     */
+    public function getBankCards(): Collection
+    {
+        return $this->bankCards;
+    }
+
+    public function addBankCard(BankCard $bankCard): static
+    {
+        if (!$this->bankCards->contains($bankCard)) {
+            $this->bankCards->add($bankCard);
+            $bankCard->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeBankCard(BankCard $bankCard): static
+    {
+        if ($this->bankCards->removeElement($bankCard)) {
+            // set the owning side to null (unless already changed)
+            if ($bankCard->getUser() === $this) {
+                $bankCard->setUser(null);
             }
         }
 
