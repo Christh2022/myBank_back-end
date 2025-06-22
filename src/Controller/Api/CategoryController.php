@@ -32,14 +32,16 @@ class CategoryController extends AbstractController
     }
 
     #[Route('/{id}', methods: ['DELETE'], name: 'delete_category_by_id')]
-    public function delete(int $id, CategoryRepository $categoryRepository): JsonResponse
+    public function delete(int $id, CategoryRepository $categoryRepository, EntityManagerInterface $entityManager): JsonResponse
     {
         $category = $categoryRepository->find($id);
         if (!$category) {
             return $this->json(['error' => 'Category not found'], 404);
         }
 
-        $categoryRepository->delete($category);
+        $entityManager->remove($category);
+        $entityManager->flush();
+
         return $this->json(['message' => 'Category deleted successfully']);
     }
 
@@ -92,6 +94,8 @@ class CategoryController extends AbstractController
         $entityManager->flush();
         return $this->json($category, 200, [], ['groups' => ['category:read', 'expense:read', 'user:read']]);
     }
+
+    
 
     #[Route('/category/expense/{id}', methods: ['GET'], name: 'get_expenses_by_category_id')]
     public function getExpensesByCategoryId(int $id, ExpenseRepository $expenseRepository): JsonResponse
